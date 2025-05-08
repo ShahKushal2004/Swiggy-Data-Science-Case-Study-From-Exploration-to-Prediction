@@ -24,5 +24,17 @@ Python is used for deeper analysis and data manipulation.
 📈 Data Visualization
 Insights are visualized using libraries like Matplotlib, Seaborn, and platforms such as Tableau and Power BI to present findings in a clear and compelling manner
 
+Libraries Required
+pip install pandas
+pip install numpy
+pip install matplotlib
+pip install seaborn
+pip install plotly
+pip install scikit-learn
+pip install xgboost
+
+
+
+
 
 
