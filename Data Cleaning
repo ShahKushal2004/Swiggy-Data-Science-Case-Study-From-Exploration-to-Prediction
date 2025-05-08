@@ -1,0 +1,101 @@
+from google.colab import files
+uploaded = files.upload()  # Upload the Excel file manually
+
+import pandas as pd
+df = pd.read_excel("restaurant.xlsx")
+df.head()
+import requests
+
+# STEP 2: Basic cleaning
+
+# Remove duplicates
+df.drop_duplicates(inplace=True)
+
+# Strip whitespace and standardize columns
+df.columns = df.columns.str.strip().str.lower().str.replace(' ', '_')
+
+# Convert data types
+df['rating'] = pd.to_numeric(df['rating'], errors='coerce')
+df['rating_count'] = df['rating_count'].astype(str).str.replace(',', '', regex=False)
+df['rating_count'] = pd.to_numeric(df['rating_count'], errors='coerce')
+df['sales_amount'] = df['sales_amount'].astype(str).replace('[₹$,]', '', regex=True)
+df['sales_amount'] = pd.to_numeric(df['sales_amount'], errors='coerce')
+df['order_date'] = pd.to_datetime(df['order_date'], errors='coerce')
+df['age'] = pd.to_numeric(df['age'], errors='coerce')
+df['year'] = pd.to_numeric(df['year'], errors='coerce')
+
+# Filter out unrealistic ages
+df = df[(df['age'] >= 15) & (df['age'] <= 100)]
+
+# STEP 3: Check for missing values
+print("Missing values:")
+print(df.isnull().sum())
+
+# STEP 4: Check for data types
+print("\nData types:")
+print(df.dtypes)
+
+# STEP 5: Check for invalid links (only structural)
+df['link'] = df['link'].astype(str).str.strip()
+df = df[df['link'].str.startswith(('http://', 'https://'), na=False)]
+
+# Optional: Check if links work (sample only due to slowness)
+def is_link_working(url):
+    try:
+        response = requests.head(url, timeout=5)
+        return response.status_code < 400
+    except:
+        return False
+
+# Apply on sample (e.g., first 50 links)
+sample = df['link'].sample(min(50, len(df)), random_state=1)
+link_check = sample.apply(is_link_working)
+print(f"\nWorking links in sample: {link_check.sum()} / {len(link_check)}")
+
+# STEP 6: Save cleaned version
+df.to_excel(r"C:\Users\Kushal\Desktop\restaurant_cleaned.xlsx", index=False)
+
+print("\n✅ Dataset cleaned and saved.")
+
+
+ Fill with placeholder if used in visualizations
+df['name'].fillna("Unknown", inplace=True)
+df['cuisine'].fillna("Not Specified", inplace=True)
+df['address'].fillna("No Address", inplace=True)
+
+ 1. Drop empty column
+df.drop(columns=['rating_count'], inplace=True)
+
+# 2. Standardize city, gender, marital_status
+df['city'] = df['city'].str.title().str.strip()
+df['gender'] = df['gender'].str.capitalize().str.strip()
+df['marital_status'] = df['marital_status'].str.capitalize().str.strip()
+
+# 3. Convert month (if needed)
+try:
+    df['month_num'] = pd.to_datetime(df['month'], format='%B').dt.month
+except:
+    df['month_num'] = pd.to_numeric(df['month'], errors='coerce')
+
+
+ Missing data report
+print(df.isnull().sum())
+
+ Duplicate rows
+print("Duplicates:", df.duplicated().sum())
+
+ Column data types
+print(df.dtypes)
+
+# 4. Unique values in key categorical fields
+print(df['gender'].unique())
+print(df['marital_status'].unique())
+
+missing_score = df.isnull().mean().mean()  # % of missing values
+duplicate_score = df.duplicated().mean()   # % of duplicate rows
+
+cleanliness_score = 1 - (missing_score + duplicate_score)
+print("Cleanliness Score (0–1):", round(cleanliness_score, 2))
+
+
+
